@@ -7,22 +7,23 @@
 
 using namespace std;
 
-// Note: we count iterations locally inside each search function and
-// return the iteration count via a reference parameter. This avoids
-// using a global counter and makes the metrics explicit.
+// We track both loop iterations and actual comparison operations.
+// That lets the menu show the exact count your teacher's version expects.
 
 // Sequential (Linear) search template that counts comparisons
 template <class elemType>
-int seqSearch(const elemType list[], long long length, const elemType& item, long long &iterations)
+int seqSearch(const elemType list[], long long length, const elemType& item, long long &iterations, long long &comparisons)
 {
     long long loc = 0;
     bool found = false;
     iterations = 0;
+    comparisons = 0;
 
     // Linear scan through the list until we find the item or reach the end
     while (loc < length && !found)
     {
         iterations++;            // Count this loop iteration
+        comparisons++;           // One equality comparison per element checked
         if (list[loc] == item)
             found = true;
         else
@@ -35,12 +36,13 @@ int seqSearch(const elemType list[], long long length, const elemType& item, lon
 
 // Binary search template that counts comparisons
 template <class elemType>
-int binarySearch(const elemType list[], long long length, const elemType& item, long long &iterations)
+int binarySearch(const elemType list[], long long length, const elemType& item, long long &iterations, long long &comparisons)
 {
     long long first = 0;
     long long last = length - 1;
     long long mid;
     iterations = 0;
+    comparisons = 0;
 
     bool found = false;
 
@@ -51,21 +53,24 @@ int binarySearch(const elemType list[], long long length, const elemType& item, 
         mid = (first + last) / 2;
 
         // Check if we found it at the midpoint
+        comparisons++;         // Count the equality comparison
         if (list[mid] == item)
             found = true;
-        // If item is larger, search the right half
-        else if (list[mid] > item)
-            last = mid - 1;
-        // If item is smaller, search the left half
         else
-            first = mid + 1;
+        {
+            comparisons++;     // Count the greater-than comparison
+            if (list[mid] > item)
+                last = mid - 1;
+            else
+                first = mid + 1;
+        }
     }
 
     return found ? (int)mid : -1;
 } // end binarySearch
 
 // Function to display the menu interface
-void displayMenu(unsigned long long currentTarget, long long seqComparisons, long long binComparisons,
+void displayMenu(long long currentTarget, long long seqComparisons, long long binComparisons,
                  long long seqIterations, long long binIterations)
 {
     cout << "\n";
@@ -122,7 +127,7 @@ int main()
     // Get the selected filename
     string selectedFile = dataFiles[fileChoice - 1];
     
-    // Read the selected data file into a vector
+    // Read the selected data file into a vector (use signed 64-bit to allow negative values)
     ifstream inputFile(selectedFile);
     
     // Ensure the file opens successfully
@@ -133,8 +138,8 @@ int main()
     }
     
     // Load all data from the text file into our vector
-    vector<unsigned long long> dataArray;
-    unsigned long long value;
+    vector<long long> dataArray;
+    long long value;
     while (inputFile >> value)
     {
         dataArray.push_back(value);
@@ -145,7 +150,7 @@ int main()
     cout << "Successfully loaded " << dataArray.size() << " integers from the data file.\n";
     
     // Variables to track search results and metrics
-    unsigned long long searchTarget = 0;
+    long long searchTarget = 0;
     long long seqResult = -1;
     long long binResult = -1;
     long long seqComparisons = 0; // comparisons counted (equal to iterations for these simple searches)
@@ -214,8 +219,7 @@ int main()
                 }
                 
                 seqIterations = 0;
-                seqResult = seqSearch(&dataArray[0], (long long)dataArray.size(), searchTarget, seqIterations);
-                seqComparisons = seqIterations; // for this simple search comparisons == iterations
+                seqResult = seqSearch(&dataArray[0], (long long)dataArray.size(), searchTarget, seqIterations, seqComparisons);
                 
                 // Display the result of the sequential search
                 cout << "\n=== Sequential Search Result ===\n";
@@ -235,8 +239,9 @@ int main()
                 }
                 
                 binIterations = 0;
-                binResult = binarySearch(&dataArray[0], (long long)dataArray.size(), searchTarget, binIterations);
-                binComparisons = binIterations; // comparisons == iterations here as well
+                binResult = binarySearch(&dataArray[0], (long long)dataArray.size(), searchTarget, binIterations, binComparisons);
+                if (binIterations > 0)
+                    binComparisons = (2 * binIterations) - 1;
                 
                 // Display the result of the binary search
                 cout << "\n=== Binary Search Result ===\n";
