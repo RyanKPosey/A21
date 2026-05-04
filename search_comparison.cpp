@@ -95,13 +95,44 @@ void displayMenu(unsigned long long currentTarget, long long seqComparisons, lon
 
 int main()
 {
-    // Read the data file into a vector
-    ifstream inputFile("data/1000000.dat", ios::binary);
+    // Available data files for the user to choose from
+    vector<string> dataFiles = {
+        "data/10.dat",
+        "data/100.dat",
+        "data/1000.dat",
+        "data/10000.dat",
+        "data/100000.dat",
+        "data/1000000.dat"
+    };
+    
+    // Display file selection menu
+    cout << "\n=== Select Data File to Search ===" << endl;
+    for (size_t i = 0; i < dataFiles.size(); i++)
+    {
+        cout << "<" << (i + 1) << "> " << dataFiles[i] << endl;
+    }
+    cout << "\nEnter your choice (1-" << dataFiles.size() << "): ";
+    
+    int fileChoice;
+    cin >> fileChoice;
+    
+    // Validate user's file selection
+    if (fileChoice < 1 || fileChoice > (int)dataFiles.size())
+    {
+        cerr << "Error: Invalid selection. Please enter a number between 1 and " << dataFiles.size() << endl;
+        return 1;
+    }
+    
+    // Get the selected filename
+    string selectedFile = dataFiles[fileChoice - 1];
+    
+    // Read the selected data file into a vector
+    ifstream inputFile(selectedFile, ios::binary);
     
     // Ensure the file opens successfully
     if (!inputFile)
     {
-        cerr << "Error: Could not open the file 'data/1000000.dat'" << endl;
+        cerr << "Error: Could not open the file '" << selectedFile << "'" << endl;
         return 1;
     }
     
